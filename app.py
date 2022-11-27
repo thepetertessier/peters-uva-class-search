@@ -57,6 +57,21 @@ colors = {
 app.layout = html.Div([
     html.Img(src=IMAGE, height=200),
     html.Br(),
+    dbc.Row(
+        dbc.Col([
+            html.Br(),
+            dbc.Alert([
+                html.P('Welcome to my UVA Class Search!'),
+                html.P('To search for a given class, simply input the term, subject, and catalog number'),
+                html.P('Term: (optional) year and season (e.g., Spring 2023)', style={'text-align':'left'}),
+                html.P('Subject: (required) 2-4 letters denoting subject (e.g., APMA)', style={'text-align':'left'}),
+                html.P('Catalog number: (optional) 4 digits specifying which class given the subject (e.g., 1110)', style={'text-align':'left'})
+                ],
+                color='primary',
+                dismissable=True
+            )], width={'size':6, 'offset':3}
+        )
+    ),
     dbc.Row([
         dbc.Col(
             dbc.Row([
@@ -78,7 +93,7 @@ app.layout = html.Div([
         ),
         dbc.Col(
             dbc.Row([
-                html.Label('Catalog # (1010)'),
+                html.Label('Catalog # (1110)'),
                 dcc.Input(
                     id='catalog_no_input',
                     value=SAMPLE_CATALOG_NUMBER,
@@ -132,7 +147,7 @@ def create_class_info_table(term, subject, catalog_no, n_clicks):
     course_df = get_course(df, term, subject, catalog_no)
 
     if course_df.empty:
-        return html.H6('No class with that subject and/or catalog number')
+        return html.H6('No class with that term, subject, and/or catalog number')
 
     # Drop the columns we don't need
     course_df.drop('subject', axis=1, inplace=True)
