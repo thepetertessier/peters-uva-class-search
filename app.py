@@ -63,6 +63,7 @@ app.layout = html.Div([
             dbc.Alert([
                 html.P('Welcome to my UVA Class Search!'),
                 html.P('To search for a given class, simply input the term, subject, and catalog number'),
+                html.Br(),
                 html.P('Term: (optional) year and season (e.g., Spring 2023)', style={'text-align':'left'}),
                 html.P('Subject: (required) 2-4 letters denoting subject (e.g., APMA)', style={'text-align':'left'}),
                 html.P('Catalog number: (optional) 4 digits specifying which class given the subject (e.g., 1110)', style={'text-align':'left'})
