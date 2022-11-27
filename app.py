@@ -10,7 +10,8 @@ import pandas as pd
 TABTITLE = 'UVA class search'
 GITHUBLINK = 'https://github.com/thepetertessier/peters-uva-class-search'
 MYWEBSITELINK = 'https://petertessier.com'
-IMAGE = 'assets/uva_rotunda.png'
+RECORDSLINK = 'https://api.devhub.virginia.edu/v1/courses'
+IMAGE = 'assets/uva_background.png'
 
 # Constants for Input fields
 SAMPLE_SUBJECT = None
@@ -19,7 +20,7 @@ INPUT_WIDTH = '150px'
 INPUT_PADDING = 300
 
 # Data
-json_data = requests.get('https://api.devhub.virginia.edu/v1/courses').json()['class_schedules']
+json_data = requests.get(RECORDSLINK).json()['class_schedules']
 df = pd.DataFrame(json_data['records'], columns=json_data['columns'])
 terms = list(dict.fromkeys(df['term_desc'])) # e.g., ['Fall 2022','Spring 2023']
 subjects = list(dict.fromkeys(df['subject'])) # e.g., ['APMA','CS',...]
@@ -30,7 +31,7 @@ df = df.filter(items=['term_desc','subject', 'catalog_number', 'class_section',
                       'meeting_time_start', 'meeting_time_end', 'instructor'])
 
 # Helper functions
-def get_course(term_desc, subject, catalog_number):
+def get_course(this_df, term_desc, subject, catalog_number):
     """
     Return df filtered based on term_desc, subject, catalog_number
 
@@ -38,15 +39,9 @@ def get_course(term_desc, subject, catalog_number):
     :param subject: e.g., APMA
     :param catalog_number: e.g., 1110
     """
-    # Replace nonexistant term_desc and catalog_no so that their final comparison will always be true
-    if term_desc == None:
-        term_desc = df['term_desc']
-    if catalog_number == '':
-        catalog_number = df['catalog_number']
-
-    return df[(df['term_desc'] == term_desc)
-            & (df['catalog_number'] == catalog_number)
-            & (df['subject'] == subject)]
+    return this_df[(this_df['term_desc'] == term_desc)
+                 & (this_df['catalog_number'] == catalog_number)
+                 & (this_df['subject'] == subject)]
 
 
 # Initiate app
@@ -60,14 +55,7 @@ colors = {
 }
 
 app.layout = html.Div([
-    html.H1(
-        children='UVA Class Search',
-        style={
-            'color': colors['theme'],
-            # 'background-image': IMAGE
-        }
-    ),
-    html.Img(src=IMAGE, height=110),
+    html.Img(src=IMAGE, height=200),
     html.Br(),
     dbc.Row([
         dbc.Col(
@@ -107,6 +95,8 @@ app.layout = html.Div([
     html.Div(children='',id='output'),
     html.Br(),
     html.Br(),
+    html.A('Raw class records', href=RECORDSLINK),
+    html.Br(),
     html.A('Code on GitHub', href=GITHUBLINK),
     html.Br(),
     html.A('About me', href=MYWEBSITELINK)
@@ -125,11 +115,53 @@ def create_class_info_table(term, subject, catalog_no, n_clicks):
     if n_clicks == 0:
         return html.Br()
 
-    if subject == None:
+    term_exists = not (term == None)
+    subject_exists = not (subject == None)
+    catalog_no_exists = not (catalog_no == '')
+
+    if not subject_exists:
         return html.H6('Please input a subject.')
 
-    course_df = get_course(term, subject, catalog_no)
-    return dash_table.DataTable(course_df.to_dict('records'), [{"name": i, "id": i} for i in course_df.columns])
+    # Replace nonexistant term and catalog_no so that their final comparison will always be true
+    if not term_exists:
+        term = df['term_desc']
+    if not catalog_no_exists:
+        catalog_no = df['catalog_number']
+
+    # Filter df to just that course
+    course_df = get_course(df, term, subject, catalog_no)
+
+    if course_df.empty:
+        return html.H6('No class with that subject and/or catalog number')
+
+    # Drop the columns we don't need
+    course_df.drop('subject', axis=1, inplace=True)
+    if term_exists:
+        course_df.drop('term_desc', axis=1, inplace=True)
+    if catalog_no_exists:
+        course_df.drop('catalog_number', axis=1, inplace=True)
+        
+        # Head the table with e.g. 'Discrete Math and Theory I | CS 2120' or just 'CS 2120'
+        table_header = '%s | %s %s' % (course_df['class_title'].iloc[0], subject, catalog_no)
+        course_df.drop('class_title', axis=1, inplace=True)
+    else:
+        table_header = '%s' % subject
+
+    if term_exists:
+        table_header += ' (%s)' % term
+
+    # Rename columns for user
+    course_df.rename(columns={'term_desc':'Term', 'catalog_number': 'Catalog #',
+                              'class_section': 'Class section', 'class_title': 'Class Title',
+                              'class_number': 'Class #', 'meeting_days': 'Meeting days',
+                              'meeting_time_start': 'Start time', 'meeting_time_end': 'End time',
+                              'instructor': 'Instructor'}, inplace=True)
+
+    # Finally, return dataframe as DataTable
+    return html.Div([
+        html.H6(table_header, style={'text-align': 'left', 'margin-left': 10}),
+        dash_table.DataTable(course_df.to_dict('records'), [{"name": i, "id": i} for i in course_df.columns])
+    ])
 
 if __name__ == '__main__':
     app.run_server(debug=True)
