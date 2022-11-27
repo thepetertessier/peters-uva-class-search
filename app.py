@@ -1,6 +1,6 @@
 # Visit http://127.0.0.1:8050/ when running locally
 
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, dash_table
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import requests
@@ -13,8 +13,8 @@ MYWEBSITELINK = 'https://petertessier.com'
 IMAGE = 'assets/uva_rotunda.png'
 
 # Constants for Input fields
-SAMPLE_SUBJECT = 'APMA'
-SAMPLE_CATALOG_NUMBER = '1110'
+SAMPLE_SUBJECT = None
+SAMPLE_CATALOG_NUMBER = ''
 INPUT_WIDTH = '150px'
 INPUT_PADDING = 300
 
@@ -38,6 +38,12 @@ def get_course(term_desc, subject, catalog_number):
     :param subject: e.g., APMA
     :param catalog_number: e.g., 1110
     """
+    # Replace nonexistant term_desc and catalog_no so that their final comparison will always be true
+    if term_desc == None:
+        term_desc = df['term_desc']
+    if catalog_number == '':
+        catalog_number = df['catalog_number']
+
     return df[(df['term_desc'] == term_desc)
             & (df['catalog_number'] == catalog_number)
             & (df['subject'] == subject)]
@@ -62,6 +68,7 @@ app.layout = html.Div([
         }
     ),
     html.Img(src=IMAGE, height=110),
+    html.Br(),
     dbc.Row([
         dbc.Col(
             dbc.Row([
@@ -69,7 +76,6 @@ app.layout = html.Div([
                 dcc.Dropdown(
                     id='term_dropdown',
                     options=terms,
-                    value=terms[0],
                     style={'width': INPUT_WIDTH}
                 )
             ], justify='center', style={'margin-left': INPUT_PADDING})
@@ -86,18 +92,44 @@ app.layout = html.Div([
         ),
         dbc.Col(
             dbc.Row([
-                html.Label('Catalog #'),
+                html.Label('Catalog # (1010)'),
                 dcc.Input(
                     id='catalog_no_input',
                     value=SAMPLE_CATALOG_NUMBER,
                     style={'width': INPUT_WIDTH})
             ], justify='center', style={'margin-right': INPUT_PADDING}),
         ),
-
     ]),
-
+    html.Br(),
+    html.Button('Search', id='search_button', n_clicks=0, disabled=False),
+    html.Br(),
+    html.Br(),
+    html.Div(children='',id='output'),
+    html.Br(),
+    html.Br(),
+    html.A('Code on GitHub', href=GITHUBLINK),
+    html.Br(),
+    html.A('About me', href=MYWEBSITELINK)
 ], style={'textAlign': 'center', 'backgroundColor': colors['background']})
 
+
+# If the button is clicked, return table of given class
+@app.callback(
+    Output('output','children'),
+    State('term_dropdown', 'value'),
+    State('subject_dropdown', 'value'),
+    State('catalog_no_input', 'value'),
+    Input('search_button','n_clicks')
+)
+def create_class_info_table(term, subject, catalog_no, n_clicks):
+    if n_clicks == 0:
+        return html.Br()
+
+    if subject == None:
+        return html.H6('Please input a subject.')
+
+    course_df = get_course(term, subject, catalog_no)
+    return dash_table.DataTable(course_df.to_dict('records'), [{"name": i, "id": i} for i in course_df.columns])
 
 if __name__ == '__main__':
     app.run_server(debug=True)
