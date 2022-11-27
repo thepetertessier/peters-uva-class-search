@@ -63,20 +63,18 @@ app.layout = html.Div([
                 html.Label('Term'),
                 dcc.Dropdown(
                     id='term_dropdown',
-                    options=terms,
-                    style={'width': INPUT_WIDTH}
-                )
-            ], justify='center', style={'margin-left': INPUT_PADDING})
-        ),
+                    options=terms)
+            ], justify='center'),
+            width={'size':2,'offset':3}),
         dbc.Col(
             dbc.Row([
                 html.Label('Subject'),
                 dcc.Dropdown(
                     id='subject_dropdown',
                     options=subjects,
-                    value=SAMPLE_SUBJECT,
-                    style={'width': INPUT_WIDTH})
+                    value=SAMPLE_SUBJECT,)
             ], justify='center'),
+            width={'size':2,'offset':0}
         ),
         dbc.Col(
             dbc.Row([
@@ -84,8 +82,10 @@ app.layout = html.Div([
                 dcc.Input(
                     id='catalog_no_input',
                     value=SAMPLE_CATALOG_NUMBER,
+                    debounce=True,
                     style={'width': INPUT_WIDTH})
-            ], justify='center', style={'margin-right': INPUT_PADDING}),
+            ], justify='center'),
+            width={'size':2, 'offset':0}
         ),
     ]),
     html.Br(),
@@ -108,7 +108,7 @@ app.layout = html.Div([
     Output('output','children'),
     State('term_dropdown', 'value'),
     State('subject_dropdown', 'value'),
-    State('catalog_no_input', 'value'),
+    Input('catalog_no_input', 'value'),
     Input('search_button','n_clicks')
 )
 def create_class_info_table(term, subject, catalog_no, n_clicks):
@@ -140,7 +140,7 @@ def create_class_info_table(term, subject, catalog_no, n_clicks):
         course_df.drop('term_desc', axis=1, inplace=True)
     if catalog_no_exists:
         course_df.drop('catalog_number', axis=1, inplace=True)
-        
+
         # Head the table with e.g. 'Discrete Math and Theory I | CS 2120' or just 'CS 2120'
         table_header = '%s | %s %s' % (course_df['class_title'].iloc[0], subject, catalog_no)
         course_df.drop('class_title', axis=1, inplace=True)
