@@ -64,7 +64,7 @@ app.layout = html.Div([
                 html.P('Welcome to my UVA Class Search!'),
                 html.P('To search for a given class, simply input the term, subject, and catalog number'),
                 html.Br(),
-                html.P('Term: (optional) year and season (e.g., Spring 2023)', style={'text-align':'left'}),
+                html.P('Term: (optional) year and season (e.g., 2023 Spring)', style={'text-align':'left'}),
                 html.P('Subject: (required) 2-4 letters (e.g., APMA)', style={'text-align':'left'}),
                 html.P('Catalog number: (optional) 4 digits (e.g., 1110)', style={'text-align':'left'})
                 ],
