@@ -111,7 +111,7 @@ app.layout = html.Div([
     html.Div(children='',id='output'),
     html.Br(),
     html.Br(),
-    html.A('Raw class records', href=RECORDSLINK),
+    html.A('Source data', href=RECORDSLINK),
     html.Br(),
     html.A('Code on GitHub', href=GITHUBLINK),
     html.Br(),
